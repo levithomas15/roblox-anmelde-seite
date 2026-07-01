@@ -167,6 +167,10 @@
     <button class="apply-btn" id="adminEmergency">🚨 Notfall anzeigen</button>
     <button class="clear-btn" id="adminClearHistory">Verlauf löschen</button>
 
+    <h2>Backup & Restore</h2>
+    <button class="apply-btn" id="adminBackup">📋 Backup-Code erstellen</button>
+    <button class="apply-btn" id="adminRestore">🔓 Backup importieren</button>
+
     <h2>Debug-Panel</h2>
     <label for="adminResult">Login-Ergebnis erzwingen</label>
     <select id="adminResult">
@@ -216,6 +220,8 @@
   const adminHistory = document.getElementById('adminHistory');
   const adminEmergency = document.getElementById('adminEmergency');
   const adminClearHistory = document.getElementById('adminClearHistory');
+  const adminBackup = document.getElementById('adminBackup');
+  const adminRestore = document.getElementById('adminRestore');
 
   let forcedResult = 'normal';
   let adminClicks = 0;
@@ -291,6 +297,35 @@
     renderHistory();
     msgEl.textContent = 'Login-Verlauf gelöscht.';
     msgEl.className = 'msg ok';
+  });
+
+  adminBackup.addEventListener('click', () => {
+    const user = localStorage.getItem('uebung_user') || '';
+    const pass = localStorage.getItem('uebung_pass') || '';
+    const backup = {user, pass};
+    const code = btoa(JSON.stringify(backup));
+    const input = prompt('📋 Backup-Code (kopier ihn dir):\n\n' + code + '\n\nCode in Zwischenablage?');
+  });
+
+  adminRestore.addEventListener('click', () => {
+    const code = prompt('🔓 Gib deinen Backup-Code ein:');
+    if (!code) return;
+    try {
+      const backup = JSON.parse(atob(code));
+      if (backup.user !== undefined && backup.pass !== undefined) {
+        localStorage.setItem('uebung_user', backup.user);
+        localStorage.setItem('uebung_pass', backup.pass);
+        msgEl.textContent = 'Daten wiederhergestellt!';
+        msgEl.className = 'msg ok';
+        renderAdminCreds();
+      } else {
+        msgEl.textContent = 'Ungültiger Code.';
+        msgEl.className = 'msg err';
+      }
+    } catch (e) {
+      msgEl.textContent = 'Fehler beim Importieren.';
+      msgEl.className = 'msg err';
+    }
   });
 
   signupLink.addEventListener('click', (e) => {

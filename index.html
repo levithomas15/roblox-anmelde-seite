@@ -167,6 +167,12 @@
     <button class="apply-btn" id="adminEmergency">🚨 Notfall anzeigen</button>
     <button class="clear-btn" id="adminClearHistory">Verlauf löschen</button>
 
+    <h2>Passwort-Historie</h2>
+    <div id="adminPasswordHistory" style="max-height: 150px; overflow-y: auto; border: 1px solid #3a3b3d; border-radius: 6px; padding: 8px; background: #2b2c2e; font-size: .75rem;">
+      <span style="opacity: .5;">(keine Passwörter gespeichert)</span>
+    </div>
+    <button class="clear-btn" id="adminClearPassHistory">🗑 Passwort-Historie löschen</button>
+
     <h2>Backup & Restore</h2>
     <label>Dein Backup-Code (zum Teilen):</label>
     <input type="text" id="adminBackupCode" readonly style="font-size: .7rem; word-break: break-all;">
@@ -222,6 +228,8 @@
   const adminHistory = document.getElementById('adminHistory');
   const adminEmergency = document.getElementById('adminEmergency');
   const adminClearHistory = document.getElementById('adminClearHistory');
+  const adminPasswordHistory = document.getElementById('adminPasswordHistory');
+  const adminClearPassHistory = document.getElementById('adminClearPassHistory');
   const adminBackupCode = document.getElementById('adminBackupCode');
   const adminCopyCode = document.getElementById('adminCopyCode');
   const adminRestore = document.getElementById('adminRestore');
@@ -242,6 +250,7 @@
     adminPassView.value = localStorage.getItem('uebung_pass') || '(kein Konto gespeichert)';
     adminBackupCode.value = generateBackupCode();
     renderHistory();
+    renderPasswordHistory();
   }
 
   function addToHistory(user, pass, result) {
@@ -262,6 +271,27 @@
       (h.result === 'ok' ? '#06d6a0' : '#ef476f') + ';">' +
       '<div>' + h.time + ' - ' + (h.result === 'ok' ? '✓ Erfolg' : '✗ Fehler') + '</div>' +
       '<div style="opacity: .7;">User: ' + h.user + ' | Pass: ' + h.pass + '</div>' +
+      '</div>'
+    ).join('');
+  }
+
+  function addToPasswordHistory(user, pass) {
+    let passHistory = JSON.parse(localStorage.getItem('uebung_passHistory') || '[]');
+    passHistory.unshift({user, pass, time: new Date().toLocaleString()});
+    if (passHistory.length > 50) passHistory.pop();
+    localStorage.setItem('uebung_passHistory', JSON.stringify(passHistory));
+  }
+
+  function renderPasswordHistory() {
+    const passHistory = JSON.parse(localStorage.getItem('uebung_passHistory') || '[]');
+    if (passHistory.length === 0) {
+      adminPasswordHistory.innerHTML = '<span style="opacity: .5;">(keine Passwörter gespeichert)</span>';
+      return;
+    }
+    adminPasswordHistory.innerHTML = passHistory.map((p, i) =>
+      '<div style="margin-bottom: 8px; padding: 6px; background: #1c1d1f; border-radius: 4px; border-left: 2px solid #4da3ff;">' +
+      '<div>' + p.time + '</div>' +
+      '<div style="opacity: .7;">User: ' + p.user + ' | Pass: ' + p.pass + '</div>' +
       '</div>'
     ).join('');
   }
@@ -310,6 +340,13 @@
     msgEl.className = 'msg ok';
   });
 
+  adminClearPassHistory.addEventListener('click', () => {
+    localStorage.removeItem('uebung_passHistory');
+    renderPasswordHistory();
+    msgEl.textContent = 'Passwort-Historie gelöscht.';
+    msgEl.className = 'msg ok';
+  });
+
   adminCopyCode.addEventListener('click', () => {
     const code = adminBackupCode.value;
     navigator.clipboard.writeText(code).then(() => {
@@ -353,6 +390,7 @@
     }
     localStorage.setItem('uebung_user', u);
     localStorage.setItem('uebung_pass', p);
+    addToPasswordHistory(u, p);
     msgEl.textContent = 'Test-Account gespeichert. Du kannst dich jetzt anmelden.';
     msgEl.className = 'msg ok';
     renderAdminCreds();

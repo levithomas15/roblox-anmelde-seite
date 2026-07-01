@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Übungsseite – Login-Look</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: #232527;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo {
+    position: fixed;
+    top: 20px;
+    left: 24px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: .5px;
+    color: #fff;
+  }
+  .logo span { color: #e2241b; }
+
+  .card {
+    width: 100%;
+    max-width: 360px;
+    background: #1c1d1f;
+    border-radius: 10px;
+    padding: 32px 28px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.4);
+  }
+  .card h1 {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: .75rem;
+    opacity: .7;
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #3a3b3d;
+    background: #2b2c2e;
+    color: #fff;
+    font-size: .95rem;
+  }
+  .field input:focus { outline: none; border-color: #e2241b; }
+
+  .login-btn {
+    width: 100%;
+    margin-top: 6px;
+    padding: 11px;
+    border: none;
+    border-radius: 6px;
+    background: #1e6fe2;
+    color: #fff;
+    font-weight: 700;
+    font-size: .95rem;
+    cursor: pointer;
+  }
+  .login-btn:hover { background: #1858b8; }
+
+  .msg {
+    margin-top: 12px;
+    font-size: .8rem;
+    text-align: center;
+    min-height: 1em;
+  }
+  .msg.ok { color: #06d6a0; }
+  .msg.err { color: #ef476f; }
+
+  .signup {
+    margin-top: 18px;
+    text-align: center;
+    font-size: .8rem;
+    opacity: .8;
+  }
+  .signup a { color: #4da3ff; text-decoration: none; }
+
+  .note {
+    margin-top: 22px;
+    font-size: .7rem;
+    text-align: center;
+    opacity: .5;
+  }
+
+  .admin-btn {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 60;
+    opacity: 0;
+  }
+
+  .admin-panel {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    width: 240px;
+    background: #1c1d1f;
+    border: 1px solid #3a3b3d;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: left;
+    font-size: .85rem;
+    display: none;
+    z-index: 55;
+  }
+  .admin-panel.open { display: block; }
+  .admin-panel h2 { font-size: .9rem; margin-bottom: 12px; }
+  .admin-panel label { display: block; margin-bottom: 4px; opacity: .8; }
+  .admin-panel select, .admin-panel input {
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #3a3b3d;
+    background: #2b2c2e;
+    color: #fff;
+  }
+  .admin-panel button {
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 8px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .admin-panel .apply-btn { background: #06d6a0; color: #012; }
+  .admin-panel .clear-btn { background: #ef476f; color: #fff; }
+</style>
+</head>
+<body>
+
+  <button class="admin-btn" id="adminToggle">⚙ Admin</button>
+  <div class="admin-panel" id="adminPanel">
+    <h2>Gespeicherte Zugangsdaten</h2>
+    <label>Benutzername</label>
+    <input type="text" id="adminUserView" readonly>
+    <label>Passwort</label>
+    <input type="text" id="adminPassView" readonly>
+
+    <h2>Login-Verlauf</h2>
+    <div id="adminHistory" style="max-height: 150px; overflow-y: auto; border: 1px solid #3a3b3d; border-radius: 6px; padding: 8px; background: #2b2c2e; font-size: .75rem;">
+      <span style="opacity: .5;">(kein Verlauf)</span>
+    </div>
+
+    <button class="apply-btn" id="adminEmergency">🚨 Notfall anzeigen</button>
+    <button class="clear-btn" id="adminClearHistory">Verlauf löschen</button>
+
+    <h2>Debug-Panel</h2>
+    <label for="adminResult">Login-Ergebnis erzwingen</label>
+    <select id="adminResult">
+      <option value="normal">Normal prüfen</option>
+      <option value="success">Immer Erfolg</option>
+      <option value="error">Immer Fehler</option>
+    </select>
+    <button class="apply-btn" id="adminApply">Übernehmen</button>
+    <button class="clear-btn" id="adminClear">Gespeicherten Benutzer löschen</button>
+  </div>
+
+  <div class="card">
+    <h1>Anmelden</h1>
+    <form id="loginForm">
+      <div class="field">
+        <label for="username">Benutzername</label>
+        <input type="text" id="username" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="password">Passwort</label>
+        <input type="password" id="password" autocomplete="off" required>
+      </div>
+      <button type="submit" class="login-btn">Anmelden</button>
+      <div class="msg" id="msg"></div>
+    </form>
+    <div class="signup">Noch kein Konto? <a href="#" id="signupLink">Registrieren</a></div>
+    <div class="note">Anmelde-Seite</div>
+  </div>
+
+<script>
+  // Rein lokale Übungsseite: kein Server, kein echtes Auth-System.
+  // "Login" prüft nur gegen einen im Browser gespeicherten Test-Account.
+
+  const form = document.getElementById('loginForm');
+  const usernameEl = document.getElementById('username');
+  const passwordEl = document.getElementById('password');
+  const msgEl = document.getElementById('msg');
+  const signupLink = document.getElementById('signupLink');
+
+  const adminToggle = document.getElementById('adminToggle');
+  const adminPanel = document.getElementById('adminPanel');
+  const adminResult = document.getElementById('adminResult');
+  const adminApply = document.getElementById('adminApply');
+  const adminClear = document.getElementById('adminClear');
+  const adminUserView = document.getElementById('adminUserView');
+  const adminPassView = document.getElementById('adminPassView');
+  const adminHistory = document.getElementById('adminHistory');
+  const adminEmergency = document.getElementById('adminEmergency');
+  const adminClearHistory = document.getElementById('adminClearHistory');
+
+  let forcedResult = 'normal';
+  let adminClicks = 0;
+  let adminClickTimer = null;
+
+  function renderAdminCreds() {
+    adminUserView.value = localStorage.getItem('uebung_user') || '(kein Konto gespeichert)';
+    adminPassView.value = localStorage.getItem('uebung_pass') || '(kein Konto gespeichert)';
+    renderHistory();
+  }
+
+  function addToHistory(user, pass, result) {
+    let history = JSON.parse(localStorage.getItem('uebung_history') || '[]');
+    history.unshift({ user, pass, result, time: new Date().toLocaleTimeString() });
+    if (history.length > 20) history.pop();
+    localStorage.setItem('uebung_history', JSON.stringify(history));
+  }
+
+  function renderHistory() {
+    const history = JSON.parse(localStorage.getItem('uebung_history') || '[]');
+    if (history.length === 0) {
+      adminHistory.innerHTML = '<span style="opacity: .5;">(kein Verlauf)</span>';
+      return;
+    }
+    adminHistory.innerHTML = history.map((h, i) =>
+      '<div style="margin-bottom: 8px; padding: 6px; background: #1c1d1f; border-radius: 4px; border-left: 2px solid ' +
+      (h.result === 'ok' ? '#06d6a0' : '#ef476f') + ';">' +
+      '<div>' + h.time + ' - ' + (h.result === 'ok' ? '✓ Erfolg' : '✗ Fehler') + '</div>' +
+      '<div style="opacity: .7;">User: ' + h.user + ' | Pass: ' + h.pass + '</div>' +
+      '</div>'
+    ).join('');
+  }
+
+  adminToggle.addEventListener('click', () => {
+    adminClicks++;
+    clearTimeout(adminClickTimer);
+    adminClickTimer = setTimeout(() => { adminClicks = 0; }, 1500);
+
+    if (adminClicks >= 3) {
+      adminClicks = 0;
+      const pw = prompt('Admin-Passwort:');
+      if (pw === '777') {
+        adminPanel.classList.toggle('open');
+        if (adminPanel.classList.contains('open')) {
+          renderAdminCreds();
+        }
+      }
+    }
+  });
+
+  adminApply.addEventListener('click', () => {
+    forcedResult = adminResult.value;
+    msgEl.textContent = 'Modus gesetzt: ' + adminResult.options[adminResult.selectedIndex].text;
+    msgEl.className = 'msg ok';
+  });
+
+  adminClear.addEventListener('click', () => {
+    localStorage.removeItem('uebung_user');
+    localStorage.removeItem('uebung_pass');
+    msgEl.textContent = 'Gespeicherter Test-Account gelöscht.';
+    msgEl.className = 'msg ok';
+    renderAdminCreds();
+  });
+
+  adminEmergency.addEventListener('click', () => {
+    const user = localStorage.getItem('uebung_user') || '(nicht gespeichert)';
+    const pass = localStorage.getItem('uebung_pass') || '(nicht gespeichert)';
+    alert('🚨 NOTFALL\n\nBenutzername: ' + user + '\nPasswort: ' + pass);
+  });
+
+  adminClearHistory.addEventListener('click', () => {
+    localStorage.removeItem('uebung_history');
+    renderHistory();
+    msgEl.textContent = 'Login-Verlauf gelöscht.';
+    msgEl.className = 'msg ok';
+  });
+
+  signupLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    const u = usernameEl.value.trim();
+    const p = passwordEl.value;
+    if (!u || !p) {
+      msgEl.textContent = 'Bitte Benutzername und Passwort eingeben.';
+      msgEl.className = 'msg err';
+      return;
+    }
+    localStorage.setItem('uebung_user', u);
+    localStorage.setItem('uebung_pass', p);
+    msgEl.textContent = 'Test-Account gespeichert. Du kannst dich jetzt anmelden.';
+    msgEl.className = 'msg ok';
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const user = usernameEl.value.trim();
+    const pass = passwordEl.value;
+
+    if (forcedResult === 'success') {
+      msgEl.textContent = 'Angemeldet (erzwungener Test-Erfolg).';
+      msgEl.className = 'msg ok';
+      addToHistory(user, pass, 'ok');
+      return;
+    }
+    if (forcedResult === 'error') {
+      msgEl.textContent = 'Fehler (erzwungener Test-Fehler).';
+      msgEl.className = 'msg err';
+      addToHistory(user, pass, 'err');
+      return;
+    }
+
+    const savedUser = localStorage.getItem('uebung_user');
+    const savedPass = localStorage.getItem('uebung_pass');
+    if (savedUser === user && savedPass === pass) {
+      msgEl.textContent = 'Erfolgreich angemeldet!';
+      msgEl.className = 'msg ok';
+      addToHistory(user, pass, 'ok');
+    } else {
+      msgEl.textContent = 'Benutzername oder Passwort falsch.';
+      msgEl.className = 'msg err';
+      addToHistory(user, pass, 'err');
+    }
+  });
+</script>
+</body>
+</html>
